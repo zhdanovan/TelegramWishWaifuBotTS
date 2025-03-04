@@ -1,4 +1,4 @@
-import { Telegraf } from 'telegraf';
+import { Telegraf, Markup } from 'telegraf';
 
 
 const bot = new Telegraf('');
@@ -45,7 +45,14 @@ function getRandomCharacter() {
   return characters[0]; 
 }
 
-bot.command('wish', (ctx) => {
+bot.start((ctx) => {
+  const welcomeMessage = `👋 Привет, ${ctx.from.first_name}! Я бот для розыгрыша персонажей. Используй кнопку ниже, чтобы сделать wish!`;
+  ctx.reply(welcomeMessage, Markup.keyboard([
+    ['🎲 Сделать wish']
+  ]).resize());
+});
+
+bot.hears('🎲 Сделать wish', (ctx) => {
   if (ctx.from.is_bot) {
       return ctx.reply('Боты не могут использовать эту команду.');
   }
