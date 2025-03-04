@@ -1,9 +1,14 @@
 import { Telegraf, Markup } from 'telegraf';
 
+interface Character {
+  name: string;
+  chance: number;
+  rarity: string;
+}
 
 const bot = new Telegraf('');
 
-const characters = [
+const characters : Character[] = [
   { name: 'Ки Хун', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
   { name: 'Сангву', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
   { name: '457', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
@@ -31,7 +36,7 @@ const characters = [
   { name: 'Сян Лин', chance: 0.2, rarity: '⭐' },
 ];
 
-function getRandomCharacter() {
+function getRandomCharacter(): Character {
   const random = Math.random();
   let cumulativeChance = 0;
 
