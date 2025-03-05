@@ -1,9 +1,16 @@
-import { Telegraf, Markup } from 'telegraf';
+import { Telegraf, Markup, Context as TelegrafContext, Context } from 'telegraf';
 
 interface Character {
   name: string;
   chance: number;
   rarity: string;
+}
+
+interface UserStats {
+  userId: number;
+  username: string;
+  firstName: string;
+  pulledCharacters: { [characterName: string]: number }; 
 }
 
 const bot = new Telegraf('');
@@ -36,6 +43,9 @@ const characters : Character[] = [
   { name: 'Сян Лин', chance: 0.2, rarity: '⭐' },
 ];
 
+
+const userStatsMap: Map<number, UserStats> = new Map();
+
 function getRandomCharacter(): Character {
   const random = Math.random();
   let cumulativeChance = 0;
@@ -50,12 +60,33 @@ function getRandomCharacter(): Character {
   return characters[0]; 
 }
 
-bot.start((ctx) => {
-  const welcomeMessage = `👋 Привет, ${ctx.from.first_name}! Я бот для розыгрыша персонажей. Используй кнопку ниже, чтобы сделать wish!`;
+function updateUserStats(userId: number, username: string, firstName: string, characterName: string): void {
+  if (!userStatsMap.has(userId)) {
+    userStatsMap.set(userId, {
+      userId,
+      username,
+      firstName,
+      pulledCharacters: {},
+    });
+  }
+
+  const userStats = userStatsMap.get(userId)!;
+  if (!userStats.pulledCharacters[characterName]) {
+    userStats.pulledCharacters[characterName] = 0;
+  }
+  userStats.pulledCharacters[characterName] += 1;
+}
+
+function getUserStats(userId: number): UserStats | undefined {
+  return userStatsMap.get(userId);
+}
+
+bot.start((ctx : Context) => {
+  const welcomeMessage = `👋 Привет, ${ctx.from?.first_name}! Я бот для розыгрыша персонажей. Используй кнопку ниже, чтобы сделать wish!`;
   ctx.reply(welcomeMessage, Markup.keyboard([
-    ['🎲 Сделать wish']
+    ['🎲 Сделать wish', '📊 Моя статистика']
   ]).resize());
-});
+}); 
 
 bot.hears('🎲 Сделать wish', (ctx) => {
   if (ctx.from.is_bot) {
@@ -64,6 +95,10 @@ bot.hears('🎲 Сделать wish', (ctx) => {
 
   const username = ctx.from.username || ctx.from.first_name;
   const character = getRandomCharacter();
+  const userId = ctx.from.id;
+  const firstName = ctx.from.first_name || 'Пользователь';
+
+  updateUserStats(userId, username, firstName, character.name);
 
   let message = `🎲 Пользователь @${username} выбил персонажа: `;
   if (character.rarity === '⭐⭐⭐⭐⭐' || character.rarity === '⭐⭐⭐⭐') {
@@ -74,6 +109,37 @@ bot.hears('🎲 Сделать wish', (ctx) => {
 
   ctx.replyWithMarkdownV2(message);
 });
+
+bot.hears('📊 Моя статистика', (ctx: Context) => {
+  if (ctx.from?.is_bot) {
+      return ctx.reply('Боты не могут использовать эту команду.');
+  }
+  if (!ctx.from) {
+    return ctx.reply('Не удалось получить информацию о пользователе.');
+  }
+  const userId = ctx.from.id;
+  const userStats = getUserStats(userId);
+
+  if (!userStats) {
+    return ctx.reply('Вы еще не делали wish.');
+  }
+
+  let message = `📊 Ваша статистика:\n\n`;
+  for (const [characterName, count] of Object.entries(userStats.pulledCharacters)) {
+    message += `- ${characterName}: ${count} раз\n`;
+  }
+
+  const notPulledCharacters = characters.filter(character => !userStats.pulledCharacters[character.name]);
+  if (notPulledCharacters.length > 0) {
+    message += `\n🚫 Не выбиты:\n`;
+    notPulledCharacters.forEach(character => {
+      message += `- ${character.name}\n`;
+    });
+  }
+
+  ctx.reply(message);
+});
+
 
 bot.launch();
 

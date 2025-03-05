@@ -29,6 +29,7 @@ var characters = [
     { name: 'Барбара', chance: 0.2, rarity: '⭐' },
     { name: 'Сян Лин', chance: 0.2, rarity: '⭐' },
 ];
+var userStatsMap = new Map();
 function getRandomCharacter() {
     var random = Math.random();
     var cumulativeChance = 0;
@@ -41,12 +42,40 @@ function getRandomCharacter() {
     }
     return characters[0];
 }
-bot.command('wish', function (ctx) {
+function updateUserStats(userId, username, firstName, characterName) {
+    if (!userStatsMap.has(userId)) {
+        userStatsMap.set(userId, {
+            userId: userId,
+            username: username,
+            firstName: firstName,
+            pulledCharacters: {}
+        });
+    }
+    var userStats = userStatsMap.get(userId);
+    if (!userStats.pulledCharacters[characterName]) {
+        userStats.pulledCharacters[characterName] = 0;
+    }
+    userStats.pulledCharacters[characterName] += 1;
+}
+function getUserStats(userId) {
+    return userStatsMap.get(userId);
+}
+bot.start(function (ctx) {
+    var _a;
+    var welcomeMessage = "\uD83D\uDC4B \u041F\u0440\u0438\u0432\u0435\u0442, ".concat((_a = ctx.from) === null || _a === void 0 ? void 0 : _a.first_name, "! \u042F \u0431\u043E\u0442 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u0436\u0435\u0439. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 \u043A\u043D\u043E\u043F\u043A\u0443 \u043D\u0438\u0436\u0435, \u0447\u0442\u043E\u0431\u044B \u0441\u0434\u0435\u043B\u0430\u0442\u044C wish!");
+    ctx.reply(welcomeMessage, telegraf_1.Markup.keyboard([
+        ['🎲 Сделать wish', '📊 Моя статистика']
+    ]).resize());
+});
+bot.hears('🎲 Сделать wish', function (ctx) {
     if (ctx.from.is_bot) {
         return ctx.reply('Боты не могут использовать эту команду.');
     }
     var username = ctx.from.username || ctx.from.first_name;
     var character = getRandomCharacter();
+    var userId = ctx.from.id;
+    var firstName = ctx.from.first_name || 'Пользователь';
+    updateUserStats(userId, username, firstName, character.name);
     var message = "\uD83C\uDFB2 \u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C @".concat(username, " \u0432\u044B\u0431\u0438\u043B \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u0436\u0430: ");
     if (character.rarity === '⭐⭐⭐⭐⭐' || character.rarity === '⭐⭐⭐⭐') {
         message += "**".concat(character.name, "** ").concat(character.rarity, " \uD83C\uDF89");
@@ -55,6 +84,33 @@ bot.command('wish', function (ctx) {
         message += "".concat(character.name, " ").concat(character.rarity);
     }
     ctx.replyWithMarkdownV2(message);
+});
+bot.hears('📊 Моя статистика', function (ctx) {
+    var _a;
+    if ((_a = ctx.from) === null || _a === void 0 ? void 0 : _a.is_bot) {
+        return ctx.reply('Боты не могут использовать эту команду.');
+    }
+    if (!ctx.from) {
+        return ctx.reply('Не удалось получить информацию о пользователе.');
+    }
+    var userId = ctx.from.id;
+    var userStats = getUserStats(userId);
+    if (!userStats) {
+        return ctx.reply('Вы еще не делали wish.');
+    }
+    var message = "\uD83D\uDCCA \u0412\u0430\u0448\u0430 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430:\n\n";
+    for (var _i = 0, _b = Object.entries(userStats.pulledCharacters); _i < _b.length; _i++) {
+        var _c = _b[_i], characterName = _c[0], count = _c[1];
+        message += "- ".concat(characterName, ": ").concat(count, " \u0440\u0430\u0437\n");
+    }
+    var notPulledCharacters = characters.filter(function (character) { return !userStats.pulledCharacters[character.name]; });
+    if (notPulledCharacters.length > 0) {
+        message += "\n\uD83D\uDEAB \u041D\u0435 \u0432\u044B\u0431\u0438\u0442\u044B:\n";
+        notPulledCharacters.forEach(function (character) {
+            message += "- ".concat(character.name, "\n");
+        });
+    }
+    ctx.reply(message);
 });
 bot.launch();
 console.log('Бот запущен...');
