@@ -93,7 +93,7 @@ function updateUserStats(userId: number, username: string, firstName: string, ch
   checkAchievements(userId, characterName);
 }
 
-function checkAchievements(userId: number, characterName: string): void {
+async function checkAchievements(userId: number, characterName: string): Promise<void> {
   const userStats = userStatsMap.get(userId);
   if (!userStats) return;
 
@@ -102,26 +102,48 @@ function checkAchievements(userId: number, characterName: string): void {
 
   if (totalWishes === 1 && !userStats.achievements.includes('first_wish')) {
     userStats.achievements.push('first_wish');
-    bot.telegram.sendMessage(userId, `🎉 Вы получили достижение: *${achievements[0].name}*!\n${achievements[0].description}`, { parse_mode: 'Markdown' });
+    try {
+      await bot.telegram.sendMessage(
+        userId,
+        `🎉 Вы получили достижение: *${achievements[0].name}*!\n${achievements[0].description}`,
+        { parse_mode: 'Markdown' }
+      );
+    } catch (error) {
+      console.error('Ошибка при отправке сообщения:', error);
+    }
   }
 
 
   const character = characters.find(c => c.name === characterName);
   if (character && (character.rarity === '⭐⭐⭐⭐⭐' || character.rarity === '⭐⭐⭐⭐') && !userStats.achievements.includes('rare_character')) {
     userStats.achievements.push('rare_character');
-    bot.telegram.sendMessage(userId, `🎉 Вы получили достижение: *${achievements[1].name}*!\n${achievements[1].description}`, { parse_mode: 'Markdown' });
+    try {
+      await bot.telegram.sendMessage(
+        userId,
+        `🎉 Вы получили достижение: *${achievements[1].name}*!\n${achievements[1].description}`,
+        { parse_mode: 'Markdown' }
+      );
+    } catch (error) {
+      console.error('Ошибка при отправке сообщения:', error);
+    }
   }
 }
+
 
 function getUserStats(userId: number): UserStats | undefined {
   return userStatsMap.get(userId);
 }
 
 bot.start((ctx : Context) => {
+  try {
   const welcomeMessage = `👋 Привет, ${ctx.from?.first_name}! Я бот для розыгрыша персонажей. Используй кнопку ниже, чтобы сделать wish!`;
   ctx.reply(welcomeMessage, Markup.keyboard([
     ['🎲 Сделать wish', '📊 Моя статистика']
   ]).resize());
+}
+catch(error){
+  console.error('Ошибка при отправке приветственного сообщения:', error);
+}
 }); 
 
 bot.hears('🎲 Сделать wish', (ctx) => {
@@ -171,6 +193,18 @@ bot.hears('📊 Моя статистика', (ctx: Context) => {
     notPulledCharacters.forEach(character => {
       message += `- ${character.name}\n`;
     });
+  }
+
+   if (userStats.achievements.length > 0) {
+    message += `\n🏆 Достижения:\n`;
+    userStats.achievements.forEach(achievementId => {
+      const achievement = achievements.find(a => a.id === achievementId);
+      if (achievement) {
+        message += `- ${achievement.name}: ${achievement.description}\n`;
+      }
+    });
+  } else {
+    message += `\n🏆 У вас пока нет достижений.\n`;
   }
 
   ctx.reply(message);
