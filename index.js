@@ -30,6 +30,10 @@ var characters = [
     { name: 'Сян Лин', chance: 0.2, rarity: '⭐' },
 ];
 var userStatsMap = new Map();
+var achievements = [
+    { id: 'first_wish', name: 'Первый Wish', description: 'Получи первого персонажа' },
+    { id: 'rare_character', name: 'Коллекционер', description: 'Выбейте первого редкого персонажа' },
+];
 function getRandomCharacter() {
     var random = Math.random();
     var cumulativeChance = 0;
@@ -48,7 +52,8 @@ function updateUserStats(userId, username, firstName, characterName) {
             userId: userId,
             username: username,
             firstName: firstName,
-            pulledCharacters: {}
+            pulledCharacters: {},
+            achievements: []
         });
     }
     var userStats = userStatsMap.get(userId);
@@ -56,6 +61,22 @@ function updateUserStats(userId, username, firstName, characterName) {
         userStats.pulledCharacters[characterName] = 0;
     }
     userStats.pulledCharacters[characterName] += 1;
+    checkAchievements(userId, characterName);
+}
+function checkAchievements(userId, characterName) {
+    var userStats = userStatsMap.get(userId);
+    if (!userStats)
+        return;
+    var totalWishes = Object.values(userStats.pulledCharacters).reduce(function (a, b) { return a + b; }, 0);
+    if (totalWishes === 1 && !userStats.achievements.includes('first_wish')) {
+        userStats.achievements.push('first_wish');
+        bot.telegram.sendMessage(userId, "\uD83C\uDF89 \u0412\u044B \u043F\u043E\u043B\u0443\u0447\u0438\u043B\u0438 \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u0435: *".concat(achievements[0].name, "*!\n").concat(achievements[0].description), { parse_mode: 'Markdown' });
+    }
+    var character = characters.find(function (c) { return c.name === characterName; });
+    if (character && (character.rarity === '⭐⭐⭐⭐⭐' || character.rarity === '⭐⭐⭐⭐') && !userStats.achievements.includes('rare_character')) {
+        userStats.achievements.push('rare_character');
+        bot.telegram.sendMessage(userId, "\uD83C\uDF89 \u0412\u044B \u043F\u043E\u043B\u0443\u0447\u0438\u043B\u0438 \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u0435: *".concat(achievements[1].name, "*!\n").concat(achievements[1].description), { parse_mode: 'Markdown' });
+    }
 }
 function getUserStats(userId) {
     return userStatsMap.get(userId);

@@ -11,6 +11,13 @@ interface UserStats {
   username: string;
   firstName: string;
   pulledCharacters: { [characterName: string]: number }; 
+  achievements:string[];
+}
+
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
 }
 
 const bot = new Telegraf('');
@@ -46,6 +53,12 @@ const characters : Character[] = [
 
 const userStatsMap: Map<number, UserStats> = new Map();
 
+const achievements : Achievement[] = [
+  { id: 'first_wish', name: 'Первый Wish', description: 'Получи первого персонажа' },
+  { id: 'rare_character', name: 'Коллекционер', description: 'Выбейте первого редкого персонажа' },
+]
+
+
 function getRandomCharacter(): Character {
   const random = Math.random();
   let cumulativeChance = 0;
@@ -67,6 +80,7 @@ function updateUserStats(userId: number, username: string, firstName: string, ch
       username,
       firstName,
       pulledCharacters: {},
+      achievements: [],
     });
   }
 
@@ -75,6 +89,28 @@ function updateUserStats(userId: number, username: string, firstName: string, ch
     userStats.pulledCharacters[characterName] = 0;
   }
   userStats.pulledCharacters[characterName] += 1;
+
+  checkAchievements(userId, characterName);
+}
+
+function checkAchievements(userId: number, characterName: string): void {
+  const userStats = userStatsMap.get(userId);
+  if (!userStats) return;
+
+  const totalWishes = Object.values(userStats.pulledCharacters).reduce((a, b) => a + b, 0);
+
+
+  if (totalWishes === 1 && !userStats.achievements.includes('first_wish')) {
+    userStats.achievements.push('first_wish');
+    bot.telegram.sendMessage(userId, `🎉 Вы получили достижение: *${achievements[0].name}*!\n${achievements[0].description}`, { parse_mode: 'Markdown' });
+  }
+
+
+  const character = characters.find(c => c.name === characterName);
+  if (character && (character.rarity === '⭐⭐⭐⭐⭐' || character.rarity === '⭐⭐⭐⭐') && !userStats.achievements.includes('rare_character')) {
+    userStats.achievements.push('rare_character');
+    bot.telegram.sendMessage(userId, `🎉 Вы получили достижение: *${achievements[1].name}*!\n${achievements[1].description}`, { parse_mode: 'Markdown' });
+  }
 }
 
 function getUserStats(userId: number): UserStats | undefined {
