@@ -89,7 +89,9 @@ function updateUserStats(userId, username, firstName, characterName) {
             username: username,
             firstName: firstName,
             pulledCharacters: {},
-            achievements: []
+            achievements: [],
+            level: 1,
+            experience: 0
         });
     }
     var userStats = userStatsMap.get(userId);
@@ -97,7 +99,19 @@ function updateUserStats(userId, username, firstName, characterName) {
         userStats.pulledCharacters[characterName] = 0;
     }
     userStats.pulledCharacters[characterName] += 1;
+    userStats.experience += 10;
+    checkLevelUp(userStats);
     checkAchievements(userId, characterName);
+}
+function checkLevelUp(userStats) {
+    var experienceRequired = userStats.level * 100;
+    if (userStats.experience >= experienceRequired) {
+        userStats.level += 1;
+        userStats.experience = 0;
+        bot.telegram.sendMessage(userStats.userId, "\uD83C\uDF89 \u041F\u043E\u0437\u0434\u0440\u0430\u0432\u043B\u044F\u0435\u043C! \u0412\u044B \u0434\u043E\u0441\u0442\u0438\u0433\u043B\u0438 \u0443\u0440\u043E\u0432\u043D\u044F ".concat(userStats.level, "!"), { parse_mode: 'Markdown' })["catch"](function (error) {
+            console.error('Ошибка при отправке сообщения о повышении уровня:', error);
+        });
+    }
 }
 function checkAchievements(userId, characterName) {
     return __awaiter(this, void 0, void 0, function () {
@@ -189,6 +203,8 @@ bot.hears('📊 Моя статистика', function (ctx) {
         return ctx.reply('Вы еще не делали wish.');
     }
     var message = "\uD83D\uDCCA \u0412\u0430\u0448\u0430 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430:\n\n";
+    message += "\uD83C\uDF9A\uFE0F \u0423\u0440\u043E\u0432\u0435\u043D\u044C: ".concat(userStats.level, "\n");
+    message += "\uD83D\uDCC8 \u041E\u043F\u044B\u0442: ".concat(userStats.experience, "/").concat(userStats.level * 100, "\n\n");
     for (var _i = 0, _b = Object.entries(userStats.pulledCharacters); _i < _b.length; _i++) {
         var _c = _b[_i], characterName = _c[0], count = _c[1];
         message += "- ".concat(characterName, ": ").concat(count, " \u0440\u0430\u0437\n");

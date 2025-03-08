@@ -12,6 +12,8 @@ interface UserStats {
   firstName: string;
   pulledCharacters: { [characterName: string]: number }; 
   achievements:string[];
+  level: number; 
+  experience: number;
 }
 
 interface Achievement {
@@ -81,6 +83,8 @@ function updateUserStats(userId: number, username: string, firstName: string, ch
       firstName,
       pulledCharacters: {},
       achievements: [],
+      level: 1, 
+      experience: 0,
     });
   }
 
@@ -90,7 +94,27 @@ function updateUserStats(userId: number, username: string, firstName: string, ch
   }
   userStats.pulledCharacters[characterName] += 1;
 
+   userStats.experience += 10; 
+   checkLevelUp(userStats);
+
   checkAchievements(userId, characterName);
+}
+
+function checkLevelUp(userStats: UserStats): void {
+  const experienceRequired = userStats.level * 100;
+
+  if (userStats.experience >= experienceRequired) {
+    userStats.level += 1;
+    userStats.experience = 0;
+
+    bot.telegram.sendMessage(
+      userStats.userId,
+      `🎉 Поздравляем! Вы достигли уровня ${userStats.level}!`,
+      { parse_mode: 'Markdown' }
+    ).catch(error => {
+      console.error('Ошибка при отправке сообщения о повышении уровня:', error);
+    });
+  }
 }
 
 async function checkAchievements(userId: number, characterName: string): Promise<void> {
@@ -183,6 +207,8 @@ bot.hears('📊 Моя статистика', (ctx: Context) => {
   }
 
   let message = `📊 Ваша статистика:\n\n`;
+  message += `🎚️ Уровень: ${userStats.level}\n`;
+  message += `📈 Опыт: ${userStats.experience}/${userStats.level * 100}\n\n`;
   for (const [characterName, count] of Object.entries(userStats.pulledCharacters)) {
     message += `- ${characterName}: ${count} раз\n`;
   }
