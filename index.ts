@@ -14,6 +14,7 @@ interface UserStats {
   achievements:string[];
   level: number; 
   experience: number;
+  rating : number;
 }
 
 interface Achievement {
@@ -85,6 +86,7 @@ function updateUserStats(userId: number, username: string, firstName: string, ch
       achievements: [],
       level: 1, 
       experience: 0,
+      rating : 0,
     });
   }
 
@@ -95,6 +97,13 @@ function updateUserStats(userId: number, username: string, firstName: string, ch
   userStats.pulledCharacters[characterName] += 1;
 
    userStats.experience += 10; 
+
+  const character = characters.find(c => c.name === characterName);
+  if (character && (character.rarity === '⭐⭐⭐⭐⭐' || character.rarity === '⭐⭐⭐⭐')) {
+  userStats.rating += 10; 
+  }
+
+
    checkLevelUp(userStats);
 
   checkAchievements(userId, characterName);
@@ -209,6 +218,8 @@ bot.hears('📊 Моя статистика', (ctx: Context) => {
   let message = `📊 Ваша статистика:\n\n`;
   message += `🎚️ Уровень: ${userStats.level}\n`;
   message += `📈 Опыт: ${userStats.experience}/${userStats.level * 100}\n\n`;
+  message += `🏅 Рейтинг: ${userStats.rating} очков\n\n`;
+
   for (const [characterName, count] of Object.entries(userStats.pulledCharacters)) {
     message += `- ${characterName}: ${count} раз\n`;
   }

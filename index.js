@@ -91,7 +91,8 @@ function updateUserStats(userId, username, firstName, characterName) {
             pulledCharacters: {},
             achievements: [],
             level: 1,
-            experience: 0
+            experience: 0,
+            rating: 0
         });
     }
     var userStats = userStatsMap.get(userId);
@@ -100,6 +101,10 @@ function updateUserStats(userId, username, firstName, characterName) {
     }
     userStats.pulledCharacters[characterName] += 1;
     userStats.experience += 10;
+    var character = characters.find(function (c) { return c.name === characterName; });
+    if (character && (character.rarity === '⭐⭐⭐⭐⭐' || character.rarity === '⭐⭐⭐⭐')) {
+        userStats.rating += 10;
+    }
     checkLevelUp(userStats);
     checkAchievements(userId, characterName);
 }
@@ -205,6 +210,7 @@ bot.hears('📊 Моя статистика', function (ctx) {
     var message = "\uD83D\uDCCA \u0412\u0430\u0448\u0430 \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430:\n\n";
     message += "\uD83C\uDF9A\uFE0F \u0423\u0440\u043E\u0432\u0435\u043D\u044C: ".concat(userStats.level, "\n");
     message += "\uD83D\uDCC8 \u041E\u043F\u044B\u0442: ".concat(userStats.experience, "/").concat(userStats.level * 100, "\n\n");
+    message += "\uD83C\uDFC5 \u0420\u0435\u0439\u0442\u0438\u043D\u0433: ".concat(userStats.rating, " \u043E\u0447\u043A\u043E\u0432\n\n");
     for (var _i = 0, _b = Object.entries(userStats.pulledCharacters); _i < _b.length; _i++) {
         var _c = _b[_i], characterName = _c[0], count = _c[1];
         message += "- ".concat(characterName, ": ").concat(count, " \u0440\u0430\u0437\n");
