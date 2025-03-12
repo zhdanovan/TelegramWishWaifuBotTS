@@ -102,8 +102,13 @@ function updateUserStats(userId, username, firstName, characterName) {
     userStats.pulledCharacters[characterName] += 1;
     userStats.experience += 10;
     var character = characters.find(function (c) { return c.name === characterName; });
-    if (character && (character.rarity === '⭐⭐⭐⭐⭐' || character.rarity === '⭐⭐⭐⭐')) {
-        userStats.rating += 10;
+    if (character) {
+        if (character.rarity === '⭐⭐⭐⭐⭐') {
+            userStats.rating += 20;
+        }
+        else if (character.rarity === '⭐⭐⭐⭐') {
+            userStats.rating += 10;
+        }
     }
     checkLevelUp(userStats);
     checkAchievements(userId, characterName);
@@ -169,7 +174,7 @@ bot.start(function (ctx) {
     try {
         var welcomeMessage = "\uD83D\uDC4B \u041F\u0440\u0438\u0432\u0435\u0442, ".concat((_a = ctx.from) === null || _a === void 0 ? void 0 : _a.first_name, "! \u042F \u0431\u043E\u0442 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u0436\u0435\u0439. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439 \u043A\u043D\u043E\u043F\u043A\u0443 \u043D\u0438\u0436\u0435, \u0447\u0442\u043E\u0431\u044B \u0441\u0434\u0435\u043B\u0430\u0442\u044C wish!");
         ctx.reply(welcomeMessage, telegraf_1.Markup.keyboard([
-            ['🎲 Сделать wish', '📊 Моя статистика']
+            ['🎲 Сделать wish', '📊 Моя статистика', '🏆 Топ пользователей']
         ]).resize());
     }
     catch (error) {
@@ -233,6 +238,23 @@ bot.hears('📊 Моя статистика', function (ctx) {
     }
     else {
         message += "\n\uD83C\uDFC6 \u0423 \u0432\u0430\u0441 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0434\u043E\u0441\u0442\u0438\u0436\u0435\u043D\u0438\u0439.\n";
+    }
+    ctx.reply(message);
+});
+bot.hears('🏆 Топ пользователей', function (ctx) {
+    var _a;
+    if ((_a = ctx.from) === null || _a === void 0 ? void 0 : _a.is_bot) {
+        return ctx.reply('Боты не могут использовать эту команду.');
+    }
+    var topUsers = Array.from(userStatsMap.values())
+        .sort(function (a, b) { return b.rating - a.rating; })
+        .slice(0, 10);
+    var message = '🏆 Топ пользователей:\n\n';
+    topUsers.forEach(function (user, index) {
+        message += "".concat(index + 1, ". @").concat(user.username, " - ").concat(user.rating, " \u043E\u0447\u043A\u043E\u0432 (\u0423\u0440\u043E\u0432\u0435\u043D\u044C ").concat(user.level, ")\n");
+    });
+    if (topUsers.length === 0) {
+        message = 'Пока никто не в топе. Сделайте wish, чтобы подняться в рейтинге!';
     }
     ctx.reply(message);
 });

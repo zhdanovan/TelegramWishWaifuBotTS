@@ -99,11 +99,14 @@ function updateUserStats(userId: number, username: string, firstName: string, ch
    userStats.experience += 10; 
 
   const character = characters.find(c => c.name === characterName);
-  if (character && (character.rarity === '⭐⭐⭐⭐⭐' || character.rarity === '⭐⭐⭐⭐')) {
-  userStats.rating += 10; 
+  if (character) {
+    if (character.rarity === '⭐⭐⭐⭐⭐') {
+      userStats.rating += 20; 
+    } else if (character.rarity === '⭐⭐⭐⭐') {
+      userStats.rating += 10; 
+    }
   }
-
-
+  
    checkLevelUp(userStats);
 
   checkAchievements(userId, characterName);
@@ -171,7 +174,7 @@ bot.start((ctx : Context) => {
   try {
   const welcomeMessage = `👋 Привет, ${ctx.from?.first_name}! Я бот для розыгрыша персонажей. Используй кнопку ниже, чтобы сделать wish!`;
   ctx.reply(welcomeMessage, Markup.keyboard([
-    ['🎲 Сделать wish', '📊 Моя статистика']
+    ['🎲 Сделать wish', '📊 Моя статистика', '🏆 Топ пользователей']
   ]).resize());
 }
 catch(error){
@@ -246,6 +249,29 @@ bot.hears('📊 Моя статистика', (ctx: Context) => {
 
   ctx.reply(message);
 });
+
+bot.hears('🏆 Топ пользователей', (ctx: Context) => {
+  if (ctx.from?.is_bot) {
+    return ctx.reply('Боты не могут использовать эту команду.');
+  }
+
+
+  const topUsers = Array.from(userStatsMap.values())
+    .sort((a, b) => b.rating - a.rating) 
+    .slice(0, 10); 
+
+  let message = '🏆 Топ пользователей:\n\n';
+  topUsers.forEach((user, index) => {
+    message += `${index + 1}. @${user.username} - ${user.rating} очков (Уровень ${user.level})\n`;
+  });
+
+  if (topUsers.length === 0) {
+    message = 'Пока никто не в топе. Сделайте wish, чтобы подняться в рейтинге!';
+  }
+
+  ctx.reply(message);
+});
+
 
 
 bot.launch();
