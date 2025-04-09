@@ -39,6 +39,12 @@ const characters : Character[] = [
   { name: 'Али', chance: 0.15, rarity: '⭐' },
   { name: 'Рыбак', chance: 0.2, rarity: '⭐' },
   // Персонажи из Genshin Impact
+  { name: 'Дотторе', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
+  { name: 'Капитано', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
+  { name: 'Царица', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
+  { name: 'Синьора', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
+  { name: 'Панталоне', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
+  { name: 'Коломбина', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
   { name: 'Дилюк', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' }, 
   { name: 'Арлекино', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' },
   { name: 'Дайнслейф', chance: 0.01, rarity: '⭐⭐⭐⭐⭐' },

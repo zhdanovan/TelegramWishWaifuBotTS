@@ -1,0 +1,27 @@
+{
+  "name": "telegram-wish-waifu-bot-ts",
+  "version": "1.0.0",
+  "description": "Telegram bot for gacha-style character pulls",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "typescript",
+    "gacha"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "telegraf": "^4.12.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "typescript": "^5.0.4"
+  }
+}
